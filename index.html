@@ -1,197 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comercial Odoncito – Entregas</title>
-
-<style>
-/* ===== PALETA DE MARCA ===== */
-:root {
-  --azul: #3B82F6;
-  --azul-oscuro: #2563EB;
-  --fondo: #F8FAFC;
-  --texto: #0F172A;
-  --exito: #16A34A;
-  --pendiente: #D97706;
-}
-
-/* ===== BASE ===== */
-body {
-  margin: 0;
-  font-family: system-ui, Arial, sans-serif;
-  background: var(--fondo);
-  color: var(--texto);
-}
-
-/* ===== HEADER ===== */
-.header {
-  background: var(--azul);
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.logo {
-  height: 48px;
-}
-
-/* ===== NAV ===== */
-nav {
-  display: flex;
-}
-
-nav button {
-  flex: 1;
-  padding: 14px;
-  font-size: 16px;
-  border: none;
-  background: #E5E7EB;
-}
-
-nav button.active {
-  background: var(--azul-oscuro);
-  color: white;
-  font-weight: bold;
-}
-
-/* ===== SECCIONES ===== */
-section {
-  display: none;
-  padding: 12px;
-}
-
-section.active {
-  display: block;
-}
-
-/* ===== FORM ===== */
-input, textarea, button, select {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  border: 1px solid #CBD5E1;
-}
-
-button {
-  background: var(--azul);
-  color: white;
-  border: none;
-  font-weight: bold;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-/* ===== MENSAJE OK ===== */
-.ok {
-  background: #DCFCE7;
-  border-left: 6px solid var(--exito);
-  padding: 12px;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-/* ===== TABLA ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background: white;
-}
-
-th {
-  background: #E5E7EB;
-  padding: 8px;
-}
-
-td {
-  padding: 8px;
-  border-bottom: 1px solid #E5E7EB;
-  vertical-align: top;
-}
-
-.estado-pendiente {
-  color: var(--pendiente);
-  font-weight: bold;
-}
-
-.estado-despachado {
-  color: var(--exito);
-  font-weight: bold;
-}
-</style>
-</head>
-
-<body>
-
-<!-- ===== HEADER CON LOGO ===== -->
-<div class="header">
-  <img src="logo.png" alt="Comercial Odoncito" class="logo">
-</div>
-
-<!-- ===== NAVEGACIÓN ===== -->
-<nav>
-  <button id="btnRegistro" class="active" onclick="mostrar('registro', this)">
-    REGISTRO
-  </button>
-  <button id="btnDespachos" onclick="mostrar('despachos', this)">
-    DESPACHOS
-  </button>
-</nav>
-
-<!-- ===== REGISTRO ===== -->
-<section id="registro" class="active">
-  <h2>Registrar pedido</h2>
-
-  <input id="celular" placeholder="Celular" oninput="buscarPorCelular()">
-  <input id="nombre" placeholder="Nombre">
-  <input id="ciudad" placeholder="Ciudad">
-  <input id="direccion" placeholder="Dirección">
-  <input id="referencia" placeholder="Referencia">
-  <textarea id="productos" placeholder="Productos (separados por coma)"></textarea>
-  <textarea id="obs" placeholder="Observaciones"></textarea>
-
-  <button onclick="registrar()">REGISTRAR PEDIDO</button>
-
-  <div id="msg"></div>
-</section>
-
-<!-- ===== DESPACHOS ===== -->
-<section id="despachos">
-  <h2>Despachos</h2>
-
-  <select id="filtroEstado" onchange="render()">
-    <option value="PENDIENTE">Pendientes</option>
-    <option value="DESPACHADO">Despachados</option>
-    <option value="TODOS">Todos</option>
-  </select>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Ciudad</th>
-        <th>Celular</th>
-        <th>Productos</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-        <th>Repartidor</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="tabla"></tbody>
-  </table>
-</section>
-
 <script>
-let pedidos = [];
+/* ================= CONFIG ================= */
+const API = "http://127.0.0.1:5000"; // CAMBIAR por IP de la PC en LAN
 
-/* ===== NAVEGACIÓN ===== */
+/* ================= NAVEGACIÓN ================= */
 function mostrar(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -199,69 +10,69 @@ function mostrar(id, btn) {
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
 
-  if (id === "despachos") render();
+  if (id === "despachos") cargarDespachos();
 }
 
-/* ===== BUSCAR CLIENTE POR CELULAR ===== */
-function buscarPorCelular() {
-  const cel = celular.value.trim();
-  const ultimo = [...pedidos].reverse().find(p => p.celular === cel);
-
-  if (ultimo) {
-    nombre.value = ultimo.cliente;
-    ciudad.value = ultimo.ciudad;
-    direccion.value = ultimo.direccion;
-    referencia.value = ultimo.referencia;
-  }
-}
-
-/* ===== REGISTRAR ===== */
-function registrar() {
+/* ================= REGISTRO ================= */
+async function registrar() {
   if (!celular.value || !nombre.value) {
     alert("Celular y nombre son obligatorios");
     return;
   }
 
-  const id = Date.now();
-
-  pedidos.push({
-    id,
+  const payload = {
     celular: celular.value,
-    cliente: nombre.value,
+    nombre: nombre.value,
     ciudad: ciudad.value,
     direccion: direccion.value,
     referencia: referencia.value,
     productos: productos.value,
-    observaciones: obs.value,
-    fecha: new Date().toLocaleString(),
-    estado: "PENDIENTE",
-    repartidor: ""
-  });
+    observaciones: obs.value
+  };
 
-  msg.innerHTML = `<div class="ok">✅ PEDIDO REGISTRADO<br>ID DE COMPRA: ${id}</div>`;
+  try {
+    const r = await fetch(`${API}/registrar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  celular.value = nombre.value = ciudad.value =
-  direccion.value = referencia.value =
-  productos.value = obs.value = "";
+    const data = await r.json();
 
-  render();
+    if (!data.ok) {
+      alert(data.error || "Error al registrar");
+      return;
+    }
+
+    msg.innerHTML = `
+      <div class="ok">
+        ✅ PEDIDO REGISTRADO<br>
+        ID DE COMPRA: ${data.entrega_id}
+      </div>
+    `;
+
+    celular.value = nombre.value = ciudad.value =
+    direccion.value = referencia.value =
+    productos.value = obs.value = "";
+
+  } catch (e) {
+    alert("No se pudo conectar al backend");
+  }
 }
 
-/* ===== DESPACHAR ===== */
-function despachar(id) {
-  const r = prompt("Repartidor:");
-  if (!r) return;
-
-  pedidos = pedidos.map(p =>
-    p.id === id
-      ? { ...p, estado: "DESPACHADO", repartidor: r }
-      : p
-  );
-  render();
+/* ================= DESPACHOS ================= */
+async function cargarDespachos() {
+  try {
+    const r = await fetch(`${API}/despachos/pendientes`);
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    alert("Error cargando despachos");
+  }
 }
 
-/* ===== RENDER TABLA ===== */
-function render() {
+/* ================= RENDER TABLA ================= */
+function render(pedidos) {
   tabla.innerHTML = "";
   const filtro = filtroEstado.value;
 
@@ -270,24 +81,24 @@ function render() {
     .forEach(p => {
       tabla.innerHTML += `
       <tr>
-        <td>${p.cliente}</td>
+        <td>${p.cliente ?? ""}</td>
         <td>${p.ciudad}</td>
         <td>${p.celular}</td>
         <td>${p.productos}</td>
         <td>${p.fecha}</td>
-        <td class="${p.estado === 'PENDIENTE' ? 'estado-pendiente' : 'estado-despachado'}">
-          ${p.estado}
-        </td>
-        <td>${p.repartidor}</td>
+        <td class="estado-pendiente">${p.estado}</td>
+        <td>${p.repartidor ?? ""}</td>
         <td>
-          ${p.estado === "PENDIENTE"
-            ? `<button onclick="despachar(${p.id})">DESPACHAR</button>`
-            : ""}
+          <button onclick="despachar(${p.entrega_id})">
+            DESPACHAR
+          </button>
         </td>
       </tr>`;
     });
 }
-</script>
 
-</body>
-</html>
+/* ================= DESPACHAR (placeholder) ================= */
+function despachar(id) {
+  alert("Siguiente paso: despachar ID " + id);
+}
+</script>
