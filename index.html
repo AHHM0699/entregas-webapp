@@ -210,26 +210,45 @@ async function registrar() {
 
 /* Despachos */
 async function cargarDespachos() {
-  const r = await fetch(`${API}/despachos/pendientes`);
-  const data = await r.json();
-  tabla.innerHTML = "";
+  try {
+    const r = await fetch(`${API}/despachos/pendientes`);
+    const data = await r.json();
 
-  data.forEach(p => {
-    tabla.innerHTML += `
-      <tr>
-        <td>${p.entrega_id}</td>
-        <td>${p.fecha}</td>
-        <td>${p.ciudad}</td>
-        <td>${p.productos}</td>
-        <td>${p.cliente}</td>
-        <td>${p.celular}</td>
-        <td class="estado-pendiente">${p.estado}</td>
-        <td>${p.repartidor ?? ""}</td>
-      </tr>
-    `;
-  });
+    console.log("DESPACHOS RECIBIDOS:", data);
+
+    tabla.innerHTML = "";
+
+    if (data.length === 0) {
+      tabla.innerHTML = `
+        <tr>
+          <td colspan="8">No hay despachos pendientes</td>
+        </tr>
+      `;
+      return;
+    }
+
+    data.forEach(p => {
+      tabla.innerHTML += `
+        <tr>
+          <td>${p.entrega_id}</td>
+          <td>${p.fecha}</td>
+          <td>${p.ciudad}</td>
+          <td>${p.productos}</td>
+          <td>${p.cliente}</td>
+          <td>${p.celular}</td>
+          <td class="estado-pendiente">${p.estado}</td>
+          <td>${p.repartidor ?? ""}</td>
+        </tr>
+      `;
+    });
+
+  } catch (e) {
+    alert("Error cargando despachos");
+    console.error(e);
+  }
 }
 </script>
 
 </body>
 </html>
+
