@@ -1,8 +1,161 @@
-<script>
-/* ================= CONFIG ================= */
-const API = "http://127.0.0.1:5000"; // CAMBIAR por IP de la PC en LAN
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comercial Odoncito – Entregas</title>
 
-/* ================= NAVEGACIÓN ================= */
+<style>
+:root {
+  --azul: #3B82F6;
+  --azul-oscuro: #2563EB;
+  --fondo: #F8FAFC;
+  --texto: #0F172A;
+  --exito: #16A34A;
+  --pendiente: #D97706;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.header {
+  background: var(--azul);
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+nav {
+  display: flex;
+}
+
+nav button {
+  flex: 1;
+  padding: 14px;
+  font-size: 16px;
+  border: none;
+  background: #E5E7EB;
+}
+
+nav button.active {
+  background: var(--azul-oscuro);
+  color: white;
+  font-weight: bold;
+}
+
+section {
+  display: none;
+  padding: 12px;
+}
+
+section.active {
+  display: block;
+}
+
+input, textarea, button, select {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+}
+
+button {
+  background: var(--azul);
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+.ok {
+  background: #DCFCE7;
+  border-left: 6px solid var(--exito);
+  padding: 12px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: white;
+}
+
+th {
+  background: #E5E7EB;
+  padding: 8px;
+}
+
+td {
+  padding: 8px;
+  border-bottom: 1px solid #E5E7EB;
+  vertical-align: top;
+}
+
+.estado-pendiente {
+  color: var(--pendiente);
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <strong style="color:white;font-size:18px">COMERCIAL ODONCITO</strong>
+</div>
+
+<nav>
+  <button id="btnRegistro" class="active" onclick="mostrar('registro', this)">REGISTRO</button>
+  <button id="btnDespachos" onclick="mostrar('despachos', this)">DESPACHOS</button>
+</nav>
+
+<section id="registro" class="active">
+  <h2>Registrar pedido</h2>
+
+  <input id="celular" placeholder="Celular">
+  <input id="nombre" placeholder="Nombre">
+  <input id="ciudad" placeholder="Ciudad">
+  <input id="direccion" placeholder="Dirección">
+  <input id="referencia" placeholder="Referencia">
+  <textarea id="productos" placeholder="Productos (separados por coma)"></textarea>
+  <textarea id="obs" placeholder="Observaciones"></textarea>
+
+  <button onclick="registrar()">REGISTRAR PEDIDO</button>
+  <div id="msg"></div>
+</section>
+
+<section id="despachos">
+  <h2>Despachos pendientes</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Fecha</th>
+        <th>Ciudad</th>
+        <th>Productos</th>
+        <th>Cliente</th>
+        <th>Celular</th>
+        <th>Estado</th>
+        <th>Repartidor</th>
+      </tr>
+    </thead>
+    <tbody id="tabla"></tbody>
+  </table>
+</section>
+
+<script>
+const API = "http://127.0.0.1:5000";
+
+/* Navegación */
 function mostrar(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -13,7 +166,7 @@ function mostrar(id, btn) {
   if (id === "despachos") cargarDespachos();
 }
 
-/* ================= REGISTRO ================= */
+/* Registro */
 async function registrar() {
   if (!celular.value || !nombre.value) {
     alert("Celular y nombre son obligatorios");
@@ -30,75 +183,53 @@ async function registrar() {
     observaciones: obs.value
   };
 
-  try {
-    const r = await fetch(`${API}/registrar`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+  const r = await fetch(`${API}/registrar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
-    const data = await r.json();
+  const data = await r.json();
 
-    if (!data.ok) {
-      alert(data.error || "Error al registrar");
-      return;
-    }
-
-    msg.innerHTML = `
-      <div class="ok">
-        ✅ PEDIDO REGISTRADO<br>
-        ID DE COMPRA: ${data.entrega_id}
-      </div>
-    `;
-
-    celular.value = nombre.value = ciudad.value =
-    direccion.value = referencia.value =
-    productos.value = obs.value = "";
-
-  } catch (e) {
-    alert("No se pudo conectar al backend");
+  if (!data.ok) {
+    alert(data.error);
+    return;
   }
+
+  msg.innerHTML = `
+    <div class="ok">
+      ✅ PEDIDO REGISTRADO<br>
+      ID DE COMPRA: ${data.entrega_id}
+    </div>
+  `;
+
+  celular.value = nombre.value = ciudad.value =
+  direccion.value = referencia.value =
+  productos.value = obs.value = "";
 }
 
-/* ================= DESPACHOS ================= */
+/* Despachos */
 async function cargarDespachos() {
-  try {
-    const r = await fetch(`${API}/despachos/pendientes`);
-    const data = await r.json();
-    render(data);
-  } catch (e) {
-    alert("Error cargando despachos");
-  }
-}
-
-/* ================= RENDER TABLA ================= */
-function render(pedidos) {
+  const r = await fetch(`${API}/despachos/pendientes`);
+  const data = await r.json();
   tabla.innerHTML = "";
-  const filtro = filtroEstado.value;
 
-  pedidos
-    .filter(p => filtro === "TODOS" || p.estado === filtro)
-    .forEach(p => {
-      tabla.innerHTML += `
+  data.forEach(p => {
+    tabla.innerHTML += `
       <tr>
-        <td>${p.cliente ?? ""}</td>
-        <td>${p.ciudad}</td>
-        <td>${p.celular}</td>
-        <td>${p.productos}</td>
+        <td>${p.entrega_id}</td>
         <td>${p.fecha}</td>
+        <td>${p.ciudad}</td>
+        <td>${p.productos}</td>
+        <td>${p.cliente}</td>
+        <td>${p.celular}</td>
         <td class="estado-pendiente">${p.estado}</td>
         <td>${p.repartidor ?? ""}</td>
-        <td>
-          <button onclick="despachar(${p.entrega_id})">
-            DESPACHAR
-          </button>
-        </td>
-      </tr>`;
-    });
-}
-
-/* ================= DESPACHAR (placeholder) ================= */
-function despachar(id) {
-  alert("Siguiente paso: despachar ID " + id);
+      </tr>
+    `;
+  });
 }
 </script>
+
+</body>
+</html>
