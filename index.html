@@ -1,254 +1,780 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comercial Odoncito – Entregas</title>
-
-<style>
-:root {
-  --azul: #3B82F6;
-  --azul-oscuro: #2563EB;
-  --fondo: #F8FAFC;
-  --texto: #0F172A;
-  --exito: #16A34A;
-  --pendiente: #D97706;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, Arial, sans-serif;
-  background: var(--fondo);
-  color: var(--texto);
-}
-
-.header {
-  background: var(--azul);
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-nav {
-  display: flex;
-}
-
-nav button {
-  flex: 1;
-  padding: 14px;
-  font-size: 16px;
-  border: none;
-  background: #E5E7EB;
-}
-
-nav button.active {
-  background: var(--azul-oscuro);
-  color: white;
-  font-weight: bold;
-}
-
-section {
-  display: none;
-  padding: 12px;
-}
-
-section.active {
-  display: block;
-}
-
-input, textarea, button, select {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  border: 1px solid #CBD5E1;
-}
-
-button {
-  background: var(--azul);
-  color: white;
-  border: none;
-  font-weight: bold;
-}
-
-.ok {
-  background: #DCFCE7;
-  border-left: 6px solid var(--exito);
-  padding: 12px;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background: white;
-}
-
-th {
-  background: #E5E7EB;
-  padding: 8px;
-}
-
-td {
-  padding: 8px;
-  border-bottom: 1px solid #E5E7EB;
-  vertical-align: top;
-}
-
-.estado-pendiente {
-  color: var(--pendiente);
-  font-weight: bold;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  <strong style="color:white;font-size:18px">COMERCIAL ODONCITO</strong>
-</div>
-
-<nav>
-  <button id="btnRegistro" class="active" onclick="mostrar('registro', this)">REGISTRO</button>
-  <button id="btnDespachos" onclick="mostrar('despachos', this)">DESPACHOS</button>
-</nav>
-
-<section id="registro" class="active">
-  <h2>Registrar pedido</h2>
-
-  <input id="celular" placeholder="Celular">
-  <input id="nombre" placeholder="Nombre">
-  <input id="ciudad" placeholder="Ciudad">
-  <input id="direccion" placeholder="Dirección">
-  <input id="referencia" placeholder="Referencia">
-  <textarea id="productos" placeholder="Productos (separados por coma)"></textarea>
-  <textarea id="obs" placeholder="Observaciones"></textarea>
-
-  <button onclick="registrar()">REGISTRAR PEDIDO</button>
-  <div id="msg"></div>
-</section>
-
-<section id="despachos">
-  <h2>Despachos pendientes</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Fecha</th>
-        <th>Ciudad</th>
-        <th>Productos</th>
-        <th>Cliente</th>
-        <th>Celular</th>
-        <th>Estado</th>
-        <th>Repartidor</th>
-      </tr>
-    </thead>
-    <tbody id="tabla"></tbody>
-  </table>
-</section>
-
-<script>
-const API = "http://192.168.1.15:5000";
-
-/* Navegación */
-function mostrar(id, btn) {
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-
-  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-
-  if (id === "despachos") cargarDespachos();
-}
-
-/* Registro */
-async function registrar() {
-  if (!celular.value || !nombre.value) {
-    alert("Celular y nombre son obligatorios");
-    return;
-  }
-
-  const payload = {
-    celular: celular.value,
-    nombre: nombre.value,
-    ciudad: ciudad.value,
-    direccion: direccion.value,
-    referencia: referencia.value,
-    productos: productos.value,
-    observaciones: obs.value
-  };
-
-  const r = await fetch(`${API}/registrar`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await r.json();
-
-  if (!data.ok) {
-    alert(data.error);
-    return;
-  }
-
-  msg.innerHTML = `
-    <div class="ok">
-      ✅ PEDIDO REGISTRADO<br>
-      ID DE COMPRA: ${data.entrega_id}
-    </div>
-  `;
-
-  celular.value = nombre.value = ciudad.value =
-  direccion.value = referencia.value =
-  productos.value = obs.value = "";
-}
-
-/* Despachos */
-async function cargarDespachos() {
-  try {
-    const r = await fetch(`${API}/despachos/pendientes`);
-    const data = await r.json();
-
-    console.log("DESPACHOS RECIBIDOS:", data);
-
-    tabla.innerHTML = "";
-
-    if (data.length === 0) {
-      tabla.innerHTML = `
-        <tr>
-          <td colspan="8">No hay despachos pendientes</td>
-        </tr>
-      `;
-      return;
+  <meta charset="UTF-8" />
+  <title>Registro de Vapeo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --radius: 14px;
     }
 
-    data.forEach(p => {
-      tabla.innerHTML += `
-        <tr>
-          <td>${p.entrega_id}</td>
-          <td>${p.fecha}</td>
-          <td>${p.ciudad}</td>
-          <td>${p.productos}</td>
-          <td>${p.cliente}</td>
-          <td>${p.celular}</td>
-          <td class="estado-pendiente">${p.estado}</td>
-          <td>${p.repartidor ?? ""}</td>
-        </tr>
-      `;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #020617, #0b1120);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .today-chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.15);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      color: #a5f3fc;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: var(--radius);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 10px 12px;
+      box-shadow: 0 16px 35px rgba(15, 23, 42, 0.85);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .timer-value {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .timer-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .sessions-today {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .sessions-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .calendar-card {
+      margin-top: 2px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .month-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+
+    .nav-btn:active {
+      background: rgba(148, 163, 184, 0.2);
+    }
+
+    .weekday-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      border: 1px solid transparent;
+    }
+
+    .day-cell button {
+      all: unset;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: inherit;
+      cursor: pointer;
+    }
+
+    .day-number {
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .day-has-data {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #e0f2fe;
+    }
+
+    .day-today {
+      border-color: rgba(52, 211, 153, 0.8);
+      box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4);
+    }
+
+    .day-selected {
+      background: linear-gradient(135deg, #38bdf8, #22c55e);
+      color: #0b1120;
+      border-color: transparent;
+    }
+
+    .day-puffs-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.9);
+    }
+
+    .events-card {
+      margin-top: 2px;
+    }
+
+    .events-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .events-date {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .events-summary {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .events-list {
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .event-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .event-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .event-time {
+      font-weight: 500;
+    }
+
+    .event-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .event-puffs {
+      font-weight: 600;
+      color: #bae6fd;
+    }
+
+    .empty-state {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 2px;
+    }
+
+    .add-btn-wrapper {
+      position: sticky;
+      bottom: 0;
+      margin-top: 4px;
+    }
+
+    .add-btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: radial-gradient(circle at top left, #38bdf8, #22c55e);
+      color: #020617;
+      box-shadow: 0 18px 40px rgba(34, 197, 94, 0.45);
+      cursor: pointer;
+    }
+
+    .add-btn:active {
+      transform: scale(0.98);
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .add-btn-emoji {
+      font-size: 22px;
+    }
+
+    .footer-note {
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 380px) {
+      .title {
+        font-size: 16px;
+      }
+      .timer-value {
+        font-size: 18px;
+      }
+      .sessions-today {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="title-block">
+        <div class="title">Registro de vapeo</div>
+        <div class="subtitle" id="todayLabel"></div>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </header>
+
+    <div class="stats-row">
+      <div class="card" style="flex: 1;">
+        <div class="card-header">
+          <div class="card-title">Desde la última sesión</div>
+          <div class="pill">cronómetro</div>
+        </div>
+        <div class="timer-value" id="timerDisplay">—:—:—</div>
+        <div class="timer-sub" id="lastSessionLabel">Sin registros aún</div>
+      </div>
+
+      <div class="card" style="width: 130px;">
+        <div class="card-header">
+          <div class="card-title">Hoy</div>
+        </div>
+        <div class="sessions-today" id="sessionsToday">0</div>
+        <div class="sessions-label" id="puffsTodayLabel">pitadas hoy</div>
+      </div>
+    </div>
+
+    <div class="card calendar-card">
+      <div class="calendar-header">
+        <button class="nav-btn" id="prevMonthBtn" aria-label="Mes anterior">‹</button>
+        <div class="month-label" id="monthLabel"></div>
+        <button class="nav-btn" id="nextMonthBtn" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="weekday-row">
+        <div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <div class="card events-card">
+      <div class="events-header">
+        <div class="events-date" id="selectedDateLabel"></div>
+        <div class="events-summary" id="selectedSummary"></div>
+      </div>
+      <div class="events-list" id="eventsList"></div>
+      <div class="add-btn-wrapper">
+        <button class="add-btn" id="addSessionBtn">
+          <span class="add-btn-emoji">💨</span>
+          <span>Registrar sesión</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Datos guardados solo en este dispositivo (almacenamiento local del navegador).
+    </div>
+  </div>
+
+  <script>
+    // --- Utilidades de fecha usando SIEMPRE hora local del dispositivo ---
+
+    function getLocalNow() {
+      // Siempre usa la hora local del teléfono
+      return new Date();
+    }
+
+    function pad(n) {
+      return n.toString().padStart(2, "0");
+    }
+
+    function getLocalDateKey(date) {
+      // Clave YYYY-MM-DD basada en hora local
+      const y = date.getFullYear();
+      const m = pad(date.getMonth() + 1);
+      const d = pad(date.getDate());
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatTimeLocal(date) {
+      return date.toLocaleTimeString("es-PE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function formatDateLongLocal(date) {
+      return date.toLocaleDateString("es-PE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    function formatMonthYearLocal(date) {
+      return date.toLocaleDateString("es-PE", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    // --- Almacenamiento local ---
+
+    const STORAGE_KEY = "vape_sessions_v1";
+
+    function loadSessions() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        // Aseguramos estructura mínima
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error("Error leyendo almacenamiento", e);
+        return [];
+      }
+    }
+
+    function saveSessions(sessions) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    }
+
+    // Sesión: { id, timestamp, puffs }
+    let sessions = loadSessions();
+
+    // --- Estado de UI ---
+
+    let currentMonthDate = (() => {
+      const now = getLocalNow();
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    })();
+
+    let selectedDateKey = getLocalDateKey(getLocalNow());
+
+    // --- Elementos DOM ---
+
+    const todayLabelEl = document.getElementById("todayLabel");
+    const todayChipEl = document.getElementById("todayChip");
+    const timerDisplayEl = document.getElementById("timerDisplay");
+    const lastSessionLabelEl = document.getElementById("lastSessionLabel");
+    const sessionsTodayEl = document.getElementById("sessionsToday");
+    const puffsTodayLabelEl = document.getElementById("puffsTodayLabel");
+    const monthLabelEl = document.getElementById("monthLabel");
+    const calendarGridEl = document.getElementById("calendarGrid");
+    const selectedDateLabelEl = document.getElementById("selectedDateLabel");
+    const selectedSummaryEl = document.getElementById("selectedSummary");
+    const eventsListEl = document.getElementById("eventsList");
+    const addSessionBtn = document.getElementById("addSessionBtn");
+    const prevMonthBtn = document.getElementById("prevMonthBtn");
+    const nextMonthBtn = document.getElementById("nextMonthBtn");
+
+    // --- Render inicial de cabecera ---
+
+    function renderHeader() {
+      const now = getLocalNow();
+      todayLabelEl.textContent = formatDateLongLocal(now);
+      todayChipEl.textContent = "Hoy " + now.toLocaleDateString("es-PE", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+    }
+
+    // --- Cálculos sobre sesiones ---
+
+    function getSessionsByDateKey(dateKey) {
+      return sessions
+        .filter((s) => getLocalDateKey(new Date(s.timestamp)) === dateKey)
+        .sort((a, b) => a.timestamp - b.timestamp);
+    }
+
+    function getTodayStats() {
+      const todayKey = getLocalDateKey(getLocalNow());
+      const todaySessions = getSessionsByDateKey(todayKey);
+      const totalSessions = todaySessions.length;
+      const totalPuffs = todaySessions.reduce((acc, s) => acc + (s.puffs || 0), 0);
+      return { totalSessions, totalPuffs };
+    }
+
+    function getLastSession() {
+      if (!sessions.length) return null;
+      return sessions.reduce((latest, s) =>
+        !latest || s.timestamp > latest.timestamp ? s : latest
+      , null);
+    }
+
+    // --- Render de stats (cronómetro + hoy) ---
+
+    function renderTodayStats() {
+      const { totalSessions, totalPuffs } = getTodayStats();
+      sessionsTodayEl.textContent = totalSessions;
+      puffsTodayLabelEl.textContent =
+        totalPuffs === 1 ? "pitada hoy" : "pitadas hoy";
+    }
+
+    function updateTimer() {
+      const last = getLastSession();
+      if (!last) {
+        timerDisplayEl.textContent = "—:—:—";
+        lastSessionLabelEl.textContent = "Sin registros aún";
+        return;
+      }
+      const now = getLocalNow();
+      const diffMs = now - new Date(last.timestamp);
+      if (diffMs < 0) {
+        timerDisplayEl.textContent = "—:—:—";
+        lastSessionLabelEl.textContent = "Revisa la hora del dispositivo";
+        return;
+      }
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      timerDisplayEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+      lastSessionLabelEl.textContent =
+        "Última sesión " + formatTimeLocal(new Date(last.timestamp));
+    }
+
+    // --- Render de calendario ---
+
+    function renderCalendar() {
+      calendarGridEl.innerHTML = "";
+      monthLabelEl.textContent = formatMonthYearLocal(currentMonthDate);
+
+      const year = currentMonthDate.getFullYear();
+      const month = currentMonthDate.getMonth();
+
+      const firstDay = new Date(year, month, 1);
+      // En JS: 0=Domingo...6=Sábado. Queremos Lunes=0...Domingo=6
+      let startIndex = firstDay.getDay() - 1;
+      if (startIndex < 0) startIndex = 6;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const todayKey = getLocalDateKey(getLocalNow());
+
+      // Precalcular días con datos
+      const daysWithData = new Set(
+        sessions.map((s) => getLocalDateKey(new Date(s.timestamp)))
+      );
+
+      // Celdas vacías antes del día 1
+      for (let i = 0; i < startIndex; i++) {
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        calendarGridEl.appendChild(cell);
+      }
+
+      // Días del mes
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+
+        const date = new Date(year, month, day);
+        const dateKey = getLocalDateKey(date);
+
+        const btn = document.createElement("button");
+        const numberSpan = document.createElement("div");
+        numberSpan.className = "day-number";
+        numberSpan.textContent = day;
+
+        const dot = document.createElement("div");
+        dot.className = "day-puffs-dot";
+
+        if (daysWithData.has(dateKey)) {
+          cell.classList.add("day-has-data");
+          btn.appendChild(dot);
+        }
+
+        if (dateKey === todayKey) {
+          cell.classList.add("day-today");
+        }
+
+        if (dateKey === selectedDateKey) {
+          cell.classList.add("day-selected");
+        }
+
+        btn.appendChild(numberSpan);
+        btn.addEventListener("click", () => {
+          selectedDateKey = dateKey;
+          renderCalendar();
+          renderSelectedDay();
+        });
+
+        cell.appendChild(btn);
+        calendarGridEl.appendChild(cell);
+      }
+    }
+
+    // --- Render de lista de eventos del día seleccionado ---
+
+    function renderSelectedDay() {
+      const dateParts = selectedDateKey.split("-");
+      const dateObj = new Date(
+        Number(dateParts[0]),
+        Number(dateParts[1]) - 1,
+        Number(dateParts[2])
+      );
+
+      selectedDateLabelEl.textContent = formatDateLongLocal(dateObj);
+
+      const daySessions = getSessionsByDateKey(selectedDateKey);
+      const totalPuffs = daySessions.reduce(
+        (acc, s) => acc + (s.puffs || 0),
+        0
+      );
+
+      if (!daySessions.length) {
+        selectedSummaryEl.textContent = "Sin sesiones registradas";
+      } else {
+        selectedSummaryEl.textContent =
+          `${daySessions.length} sesión` +
+          (daySessions.length > 1 ? "es" : "") +
+          ` · ${totalPuffs} pitada` +
+          (totalPuffs !== 1 ? "s" : "");
+      }
+
+      eventsListEl.innerHTML = "";
+
+      if (!daySessions.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No hay registros para este día.";
+        eventsListEl.appendChild(empty);
+        return;
+      }
+
+      daySessions.forEach((s) => {
+        const item = document.createElement("div");
+        item.className = "event-item";
+
+        const left = document.createElement("div");
+        left.className = "event-left";
+
+        const time = document.createElement("div");
+        time.className = "event-time";
+        time.textContent = formatTimeLocal(new Date(s.timestamp));
+
+        const meta = document.createElement("div");
+        meta.className = "event-meta";
+        meta.textContent = `ID #${s.id}`;
+
+        left.appendChild(time);
+        left.appendChild(meta);
+
+        const puffs = document.createElement("div");
+        puffs.className = "event-puffs";
+        puffs.textContent = `${s.puffs} pitada${s.puffs !== 1 ? "s" : ""}`;
+
+        item.appendChild(left);
+        item.appendChild(puffs);
+
+        eventsListEl.appendChild(item);
+      });
+    }
+
+    // --- Manejo del botón de nueva sesión ---
+
+    function addSessionFlow() {
+      const now = getLocalNow();
+      const dateKey = getLocalDateKey(now);
+
+      let input = prompt("¿Cuántas pitadas en esta sesión?", "1");
+      if (input === null) return; // cancelado
+
+      input = input.trim();
+      if (!input) return;
+
+      const puffs = Number(input);
+      if (!Number.isFinite(puffs) || puffs <= 0) {
+        alert("Introduce un número válido mayor que 0.");
+        return;
+      }
+
+      const newSession = {
+        id: Date.now(), // suficiente como ID local
+        timestamp: now.getTime(),
+        puffs,
+      };
+
+      sessions.push(newSession);
+      saveSessions(sessions);
+
+      // Actualizar estado seleccionado al día de hoy si coincide
+      selectedDateKey = dateKey;
+
+      renderTodayStats();
+      renderCalendar();
+      renderSelectedDay();
+      updateTimer();
+    }
+
+    // --- Navegación de meses ---
+
+    prevMonthBtn.addEventListener("click", () => {
+      currentMonthDate = new Date(
+        currentMonthDate.getFullYear(),
+        currentMonthDate.getMonth() - 1,
+        1
+      );
+      renderCalendar();
     });
 
-  } catch (e) {
-    alert("Error cargando despachos");
-    console.error(e);
-  }
-}
-</script>
+    nextMonthBtn.addEventListener("click", () => {
+      currentMonthDate = new Date(
+        currentMonthDate.getFullYear(),
+        currentMonthDate.getMonth() + 1,
+        1
+      );
+      renderCalendar();
+    });
 
+    addSessionBtn.addEventListener("click", addSessionFlow);
+
+    // --- Inicialización ---
+
+    function init() {
+      renderHeader();
+      renderTodayStats();
+      renderCalendar();
+      renderSelectedDay();
+      updateTimer();
+      setInterval(updateTimer, 1000);
+    }
+
+    init();
+  </script>
 </body>
 </html>
-
