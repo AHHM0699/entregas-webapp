@@ -4,27 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Vape Tracker">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Vape Tracker</title>
 
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background-color:%2300e676'%3E%3Cpath fill='%23ffffff' d='M256,48C141.1,48,48,141.1,48,256s93.1,208,208,208,208-93.1,208-208S370.9,48,256,48Zm0,368A160,160,0,1,1,416,256,160.2,160.2,0,0,1,256,416Z'/%3E%3Cpath fill='%23ffffff' d='M272,258.3V128a16,16,0,0,0-32,0V264a16,16,0,0,0,16,16h96a16,16,0,0,0,0-32Z'/%3E%3C/svg%3E">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background-color:%2300e676'%3E%3Cpath fill='%23ffffff' d='M256,48C141.1,48,48,141.1,48,256s93.1,208,208,208,208-93.1,208-208S370.9,48,256,48Zm0,368A160,160,0,1,1,416,256,160.2,160.2,0,0,1,256,416Z'/%3E%3Cpath fill='%23ffffff' d='M272,258.3V128a16,16,0,0,0-32,0V264a16,16,0,0,0,16,16h96a16,16,0,0,0,0-32Z'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
 
     <style>
         :root {
             --bg-color: #0d1117;
             --card-color: #161b22;
             --text-color: #f0f6fc;
-            
-            /* NUEVA PALETA VERDE */
-            --accent-color: #00e676; /* Verde Brillante */
+            --accent-color: #00e676;
             --accent-gradient: linear-gradient(135deg, #00e676 0%, #00c853 100%);
             --button-glow: rgba(0, 230, 118, 0.4);
-            
             --danger-color: #ff5252;
             --danger-gradient: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
-            
-            --success-color: #69f0ae;
         }
 
         body {
@@ -33,13 +29,14 @@
             color: var(--text-color);
             margin: 0;
             padding: 20px;
-            padding-top: 50px; /* Espacio para notch */
+            padding-top: 50px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
         }
 
         /* --- Header & Stats --- */
@@ -81,6 +78,7 @@
             font-weight: 800; 
             color: var(--accent-color);
             text-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+            font-variant-numeric: tabular-nums;
         }
         
         /* --- Main Action Button --- */
@@ -99,6 +97,7 @@
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin-bottom: 30px;
             box-shadow: 0 0 20px var(--button-glow);
+            -webkit-tap-highlight-color: transparent;
         }
 
         #start-btn:active { 
@@ -119,13 +118,32 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        .calendar-header { 
-            text-align: center; 
-            margin-bottom: 15px; 
+        /* Contenedor de navegación del calendario */
+        .calendar-header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #calendar-month-label { 
             font-weight: 800; 
             font-size: 1.1rem;
             color: var(--text-color);
         }
+
+        .nav-btn {
+            background: var(--card-color);
+            border: 1px solid #30363d;
+            color: var(--accent-color);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-btn:active { background: #21262d; }
         
         .calendar-grid {
             display: grid;
@@ -143,9 +161,9 @@
             cursor: pointer;
             color: #8b949e;
             transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Día con eventos: Fondo verde */
         .day.has-events { 
             background: var(--accent-gradient); 
             color: #000; 
@@ -153,10 +171,8 @@
             box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
         }
 
-        .day.selected { 
-            border: 2px solid #fff; 
-        }
-        
+        .day.selected { border: 2px solid #fff; }
+        .day.today-indicator { border: 2px solid var(--accent-color); }
         .day:empty { cursor: default; }
 
         /* --- Detail List --- */
@@ -164,6 +180,7 @@
             width: 100%;
             max-width: 400px;
             margin-top: 25px;
+            padding-bottom: 50px;
         }
         
         .event-item {
@@ -191,6 +208,7 @@
             justify-content: center;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translateY(100%);
+            touch-action: none; /* Evitar scroll en el modal */
         }
 
         #session-overlay.active { transform: translateY(0); }
@@ -224,6 +242,7 @@
             margin-bottom: 60px;
             transition: all 0.1s;
             -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
             box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
         }
 
@@ -246,6 +265,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 4px 15px rgba(255, 82, 82, 0.4);
+            -webkit-tap-highlight-color: transparent;
         }
         
         #finish-btn:active { transform: scale(0.95); }
@@ -267,10 +287,14 @@
         </div>
     </header>
 
-    <button id="start-btn" onclick="startSession()">🔥</button>
+    <button id="start-btn">🔥</button>
 
     <div class="calendar-container">
-        <div class="calendar-header" id="calendar-month"></div>
+        <div class="calendar-header-nav">
+            <button class="nav-btn" id="prev-month-btn">&lt;</button>
+            <span id="calendar-month-label"></span>
+            <button class="nav-btn" id="next-month-btn">&gt;</button>
+        </div>
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
@@ -282,38 +306,44 @@
         
         <div id="puff-btn">💨</div>
         
-        <button id="finish-btn" onclick="endSession()">Terminar</button>
+        <button id="finish-btn">Terminar</button>
     </div>
 
     <script>
-        // --- ESTADO Y VARIABLES ---
-        const STORAGE_KEY = 'vape_tracker_data_v2'; // Clave nueva para evitar conflictos
+        // --- ESTADO GLOBAL ---
+        const STORAGE_KEY = 'vape_tracker_data_v3';
         let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         
-        let currentSession = {
-            startTime: null,
-            puffs: 0,
-            totalDurationMs: 0
-        };
+        // Estado para el calendario (mes que se está viendo)
+        let today = new Date();
+        let viewMonth = today.getMonth();
+        let viewYear = today.getFullYear();
 
+        // Estado de la sesión actual
+        let currentSession = { startTime: null, puffs: 0, totalDurationMs: 0 };
         let puffStartTime = null;
         let puffInterval = null;
 
+        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Migrar datos antiguos si existen (opcional, por si quieres mantener datos previos)
-            const oldData = localStorage.getItem('vape_tracker_data');
-            if(oldData && events.length === 0) {
-                events = JSON.parse(oldData);
-                saveData();
-            }
-
             updateDashboard();
             renderCalendar();
             setInterval(updateTimeSinceLast, 1000);
 
+            // Listeners de botones principales
+            document.getElementById('start-btn').addEventListener('click', startSession);
+            document.getElementById('finish-btn').addEventListener('click', endSession);
+            
+            // Listeners de navegación del calendario
+            document.getElementById('prev-month-btn').addEventListener('click', prevMonth);
+            document.getElementById('next-month-btn').addEventListener('click', nextMonth);
+
+            // Listeners del botón de pitada
             const puffBtn = document.getElementById('puff-btn');
             puffBtn.addEventListener('touchstart', handlePuffStart, {passive: false});
             puffBtn.addEventListener('touchend', handlePuffEnd);
+            puffBtn.addEventListener('touchcancel', handlePuffEnd);
+            // Mouse listeners para testing en PC
             puffBtn.addEventListener('mousedown', handlePuffStart);
             puffBtn.addEventListener('mouseup', handlePuffEnd);
             puffBtn.addEventListener('mouseleave', () => { if(puffStartTime) handlePuffEnd(); });
@@ -334,10 +364,11 @@
             document.getElementById('puff-btn').classList.add('active');
             puffStartTime = Date.now();
 
+            // Actualización rápida del timer visual
             puffInterval = setInterval(() => {
                 const currentDuration = Date.now() - puffStartTime;
                 document.getElementById('overlay-duration').innerText = (currentDuration / 1000).toFixed(1) + "s";
-            }, 50);
+            }, 30);
         }
 
         function handlePuffEnd(e) {
@@ -346,12 +377,14 @@
             const duration = Date.now() - puffStartTime;
             clearInterval(puffInterval);
             
-            currentSession.puffs++;
-            currentSession.totalDurationMs += duration;
-
-            document.getElementById('overlay-puff-count').innerText = currentSession.puffs;
-            document.getElementById('overlay-duration').innerText = "Total: " + (currentSession.totalDurationMs / 1000).toFixed(1) + "s";
+            // Solo registrar si fue una pulsación válida (> 50ms para evitar toques fantasma)
+            if (duration > 50) {
+                currentSession.puffs++;
+                currentSession.totalDurationMs += duration;
+                document.getElementById('overlay-puff-count').innerText = currentSession.puffs;
+            }
             
+            document.getElementById('overlay-duration').innerText = "Total: " + (currentSession.totalDurationMs / 1000).toFixed(1) + "s";
             document.getElementById('puff-btn').classList.remove('active');
             puffStartTime = null;
         }
@@ -361,8 +394,8 @@
                 const now = new Date();
                 const sessionRecord = {
                     id: Date.now(),
-                    date: currentSession.startTime, // Inicio
-                    finishedAt: now.toISOString(),  // Fin (para el cronómetro)
+                    date: currentSession.startTime,
+                    finishedAt: now.toISOString(), 
                     puffs: currentSession.puffs,
                     totalDuration: currentSession.totalDurationMs
                 };
@@ -371,6 +404,11 @@
             }
             
             document.getElementById('session-overlay').classList.remove('active');
+            // Resetear vista del calendario al mes actual si se registra un evento nuevo
+            today = new Date();
+            viewMonth = today.getMonth();
+            viewYear = today.getFullYear();
+            
             updateDashboard();
             renderCalendar();
         }
@@ -383,10 +421,8 @@
         function updateDashboard() {
             const now = new Date();
             const todayStr = now.toDateString();
-            
             const count = events.filter(e => new Date(e.date).toDateString() === todayStr).length;
             document.getElementById('sessions-today').innerText = count;
-
             updateTimeSinceLast();
         }
 
@@ -395,25 +431,19 @@
                 document.getElementById('time-since-last').innerText = "--:--:--";
                 return;
             }
-
-            // Ordenar para obtener el evento más reciente
             const lastEvent = events.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-            
-            // CAMBIO: Usamos 'finishedAt' si existe, sino usamos 'date' (para compatibilidad)
-            const endTimeStr = lastEvent.finishedAt || lastEvent.date;
+            const endTimeStr = lastEvent.finishedAt || lastEvent.date; // Retrocompatibilidad
             const lastTime = new Date(endTimeStr).getTime();
             
-            const now = Date.now();
-            const diff = now - lastTime;
-
+            const diff = Date.now() - lastTime;
             if (diff < 0) {
                  document.getElementById('time-since-last').innerText = "00:00:00";
                  return;
             }
 
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            const hours = Math.floor(diff / (3600000)); // 1000*60*60
+            const minutes = Math.floor((diff % (3600000)) / 60000); // 1000*60
+            const seconds = Math.floor((diff % 60000) / 1000);
 
             document.getElementById('time-since-last').innerText = 
                 `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
@@ -422,43 +452,67 @@
         function pad(num) { return num.toString().padStart(2, '0'); }
 
         // --- LÓGICA DEL CALENDARIO ---
+        function prevMonth() {
+            viewMonth--;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            viewMonth++;
+            if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        }
+
         function renderCalendar() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            
-            document.getElementById('calendar-month').innerText = `${monthNames[month]} ${year}`;
+            document.getElementById('calendar-month-label').innerText = `${monthNames[viewMonth]} ${viewYear}`;
 
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = ''; 
+            document.getElementById('details-list').innerHTML = ''; // Limpiar detalles al cambiar de mes
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayIdx = new Date(viewYear, viewMonth, 1).getDay();
+            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-            for (let i = 0; i < firstDay; i++) {
+            // Días vacíos al inicio
+            for (let i = 0; i < firstDayIdx; i++) {
                 grid.appendChild(document.createElement('div'));
             }
 
+            // Días del mes
+            today = new Date(); // Actualizar 'hoy' por si acaso
             for (let d = 1; d <= daysInMonth; d++) {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'day';
                 dayEl.innerText = d;
 
-                const checkDate = new Date(year, month, d).toDateString();
-                const dayEvents = events.filter(e => new Date(e.date).toDateString() === checkDate);
+                const currentDateObj = new Date(viewYear, viewMonth, d);
+                const checkDateStr = currentDateObj.toDateString();
+                
+                // Marcar si es HOY
+                if (checkDateStr === today.toDateString()) {
+                    dayEl.classList.add('today-indicator');
+                }
 
+                // Marcar si tiene eventos
+                const dayEvents = events.filter(e => new Date(e.date).toDateString() === checkDateStr);
                 if (dayEvents.length > 0) {
                     dayEl.classList.add('has-events');
                 }
 
-                dayEl.onclick = () => showDetails(checkDate, dayEl);
+                dayEl.onclick = () => showDetails(checkDateStr, dayEl);
                 grid.appendChild(dayEl);
             }
         }
 
         function showDetails(dateString, element) {
-            // Estilo de selección visual
             document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
             if(element) element.classList.add('selected');
 
@@ -472,7 +526,7 @@
                 return;
             }
 
-            dayEvents.sort((a, b) => new Date(b.date) - new Date(a.date)); // Más reciente primero
+            dayEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             dayEvents.forEach(e => {
                 const timeStr = new Date(e.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -484,11 +538,14 @@
                     <div style="font-weight:bold; color:#fff">${timeStr}</div>
                     <div style="text-align:right">
                         <div style="color:var(--accent-color); font-weight:bold">💨 ${e.puffs} caladas</div>
-                        <div style="font-size:0.8rem; opacity:0.7">Duración total: ${durationSec}s</div>
+                        <div style="font-size:0.8rem; opacity:0.7">Total: ${durationSec}s</div>
                     </div>
                 `;
                 list.appendChild(item);
             });
+            
+            // Scroll hacia los detalles
+            list.scrollIntoView({behavior: 'smooth', block: 'start'});
         }
     </script>
 </body>
