@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Vape Tracker</title>
+
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background-color:%2300e676'%3E%3Cpath fill='%23ffffff' d='M256,48C141.1,48,48,141.1,48,256s93.1,208,208,208,208-93.1,208-208S370.9,48,256,48Zm0,368A160,160,0,1,1,416,256,160.2,160.2,0,0,1,256,416Z'/%3E%3Cpath fill='%23ffffff' d='M272,258.3V128a16,16,0,0,0-32,0V264a16,16,0,0,0,16,16h96a16,16,0,0,0,0-32Z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background-color:%2300e676'%3E%3Cpath fill='%23ffffff' d='M256,48C141.1,48,48,141.1,48,256s93.1,208,208,208,208-93.1,208-208S370.9,48,256,48Zm0,368A160,160,0,1,1,416,256,160.2,160.2,0,0,1,256,416Z'/%3E%3Cpath fill='%23ffffff' d='M272,258.3V128a16,16,0,0,0-32,0V264a16,16,0,0,0,16,16h96a16,16,0,0,0,0-32Z'/%3E%3C/svg%3E">
+
     <style>
         :root {
-            --bg-color: #121212;
-            --card-color: #1e1e1e;
-            --text-color: #e0e0e0;
-            --accent-color: #bb86fc;
-            --danger-color: #cf6679;
-            --success-color: #03dac6;
+            --bg-color: #0d1117;
+            --card-color: #161b22;
+            --text-color: #f0f6fc;
+            
+            /* NUEVA PALETA VERDE */
+            --accent-color: #00e676; /* Verde Brillante */
+            --accent-gradient: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+            --button-glow: rgba(0, 230, 118, 0.4);
+            
+            --danger-color: #ff5252;
+            --danger-gradient: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
+            
+            --success-color: #69f0ae;
         }
 
         body {
@@ -20,11 +33,12 @@
             color: var(--text-color);
             margin: 0;
             padding: 20px;
+            padding-top: 50px; /* Espacio para notch */
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            -webkit-user-select: none; /* Prevenir selección de texto en iPhone */
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -33,17 +47,18 @@
             width: 100%;
             max-width: 400px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .stats-container {
             display: flex;
             justify-content: space-between;
-            background-color: var(--card-color);
-            padding: 15px;
-            border-radius: 12px;
+            background: linear-gradient(145deg, #1c2128, #161b22);
+            padding: 20px;
+            border-radius: 16px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #30363d;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
 
         .stat-box {
@@ -53,44 +68,69 @@
             flex: 1;
         }
 
-        .stat-label { font-size: 0.8rem; opacity: 0.7; }
-        .stat-value { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+        .stat-label { 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            color: #8b949e; 
+            margin-bottom: 5px;
+        }
+        
+        .stat-value { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+        }
         
         /* --- Main Action Button --- */
         #start-btn {
-            background-color: var(--card-color);
-            border: 2px solid var(--accent-color);
+            background: var(--card-color);
+            border: 3px solid var(--accent-color);
             color: var(--accent-color);
-            font-size: 3rem;
-            width: 100px;
-            height: 100px;
+            font-size: 3.5rem;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin-bottom: 30px;
-            box-shadow: 0 0 15px rgba(187, 134, 252, 0.2);
+            box-shadow: 0 0 20px var(--button-glow);
         }
 
-        #start-btn:active { transform: scale(0.95); background-color: var(--accent-color); color: #000; }
+        #start-btn:active { 
+            transform: scale(0.9); 
+            background: var(--accent-gradient); 
+            border-color: transparent;
+            color: #000; 
+        }
 
         /* --- Calendar --- */
         .calendar-container {
             width: 100%;
             max-width: 400px;
             background-color: var(--card-color);
-            border-radius: 12px;
-            padding: 15px;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        .calendar-header { text-align: center; margin-bottom: 10px; font-weight: bold;}
+        .calendar-header { 
+            text-align: center; 
+            margin-bottom: 15px; 
+            font-weight: 800; 
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
         
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+            gap: 8px;
         }
 
         .day {
@@ -101,85 +141,114 @@
             border-radius: 50%;
             font-size: 0.9rem;
             cursor: pointer;
+            color: #8b949e;
+            transition: background 0.2s;
         }
 
-        .day.has-events { background-color: var(--accent-color); color: #000; font-weight: bold;}
-        .day.selected { border: 2px solid #fff; }
-        .day:empty { background: transparent; cursor: default; }
+        /* Día con eventos: Fondo verde */
+        .day.has-events { 
+            background: var(--accent-gradient); 
+            color: #000; 
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .day.selected { 
+            border: 2px solid #fff; 
+        }
+        
+        .day:empty { cursor: default; }
 
         /* --- Detail List --- */
         #details-list {
             width: 100%;
             max-width: 400px;
-            margin-top: 20px;
+            margin-top: 25px;
         }
         
         .event-item {
-            background: var(--card-color);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            background: #21262d;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
-            border-left: 4px solid var(--accent-color);
+            align-items: center;
+            font-size: 0.95rem;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         /* --- SESSION OVERLAY (Modal) --- */
         #session-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000;
+            background-color: #000000;
             z-index: 1000;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: transform 0.3s ease-in-out;
-            transform: translateY(100%); /* Hidden by default */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100%);
         }
 
         #session-overlay.active { transform: translateY(0); }
 
         .puff-counter {
-            font-size: 4rem;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-size: 6rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+            text-shadow: 0 0 20px var(--button-glow);
         }
         
-        .timer-display { font-size: 1.5rem; opacity: 0.8; margin-bottom: 40px; font-variant-numeric: tabular-nums;}
+        .timer-display { 
+            font-size: 2rem; 
+            color: #8b949e; 
+            margin-bottom: 50px; 
+            font-variant-numeric: tabular-nums;
+            font-family: monospace;
+        }
 
         #puff-btn {
-            width: 180px;
-            height: 180px;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            background: #333;
-            border: none;
-            font-size: 5rem;
+            background: #21262d;
+            border: 2px solid #30363d;
+            font-size: 6rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
             transition: all 0.1s;
-            /* Evitar menú contextual en iPhone */
             -webkit-touch-callout: none;
+            box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
         }
 
         #puff-btn.active {
-            background-color: var(--success-color);
-            transform: scale(1.1);
-            box-shadow: 0 0 30px var(--success-color);
+            background: var(--accent-gradient);
+            transform: scale(1.05);
+            border-color: transparent;
+            box-shadow: 0 0 50px rgba(0, 230, 118, 0.6);
         }
 
         #finish-btn {
-            background-color: var(--danger-color);
+            background: var(--danger-gradient);
             color: white;
             border: none;
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-size: 1.2rem;
+            padding: 18px 50px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
             cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.4);
         }
+        
+        #finish-btn:active { transform: scale(0.95); }
 
     </style>
 </head>
@@ -188,7 +257,7 @@
     <header>
         <div class="stats-container">
             <div class="stat-box">
-                <span class="stat-label">Desde última sesión</span>
+                <span class="stat-label">Libre de humo</span>
                 <span class="stat-value" id="time-since-last">--:--:--</span>
             </div>
             <div class="stat-box">
@@ -202,8 +271,7 @@
 
     <div class="calendar-container">
         <div class="calendar-header" id="calendar-month"></div>
-        <div class="calendar-grid" id="calendar-grid">
-            </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 
     <div id="details-list"></div>
@@ -214,15 +282,14 @@
         
         <div id="puff-btn">💨</div>
         
-        <button id="finish-btn" onclick="endSession()">Terminar Sesión</button>
+        <button id="finish-btn" onclick="endSession()">Terminar</button>
     </div>
 
     <script>
         // --- ESTADO Y VARIABLES ---
-        const STORAGE_KEY = 'vape_tracker_data';
+        const STORAGE_KEY = 'vape_tracker_data_v2'; // Clave nueva para evitar conflictos
         let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         
-        // Estado de la sesión actual
         let currentSession = {
             startTime: null,
             puffs: 0,
@@ -232,25 +299,24 @@
         let puffStartTime = null;
         let puffInterval = null;
 
-        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Migrar datos antiguos si existen (opcional, por si quieres mantener datos previos)
+            const oldData = localStorage.getItem('vape_tracker_data');
+            if(oldData && events.length === 0) {
+                events = JSON.parse(oldData);
+                saveData();
+            }
+
             updateDashboard();
             renderCalendar();
-            setInterval(updateTimeSinceLast, 1000); // Actualizar cronómetro cada segundo
+            setInterval(updateTimeSinceLast, 1000);
 
-            // Configurar botón de pitada (Touch y Mouse para pruebas)
             const puffBtn = document.getElementById('puff-btn');
-            
-            // Eventos Touch (Móvil)
             puffBtn.addEventListener('touchstart', handlePuffStart, {passive: false});
             puffBtn.addEventListener('touchend', handlePuffEnd);
-            
-            // Eventos Mouse (PC/Debug)
             puffBtn.addEventListener('mousedown', handlePuffStart);
             puffBtn.addEventListener('mouseup', handlePuffEnd);
-            puffBtn.addEventListener('mouseleave', () => {
-                if(puffStartTime) handlePuffEnd();
-            });
+            puffBtn.addEventListener('mouseleave', () => { if(puffStartTime) handlePuffEnd(); });
         });
 
         // --- LÓGICA DE SESIÓN ---
@@ -262,17 +328,16 @@
         }
 
         function handlePuffStart(e) {
-            if(e.cancelable) e.preventDefault(); // Evitar scroll o zoom
-            if (puffStartTime) return; // Ya presionado
+            if(e.cancelable) e.preventDefault();
+            if (puffStartTime) return;
 
             document.getElementById('puff-btn').classList.add('active');
             puffStartTime = Date.now();
 
-            // Actualizar visualmente mientras se presiona
             puffInterval = setInterval(() => {
                 const currentDuration = Date.now() - puffStartTime;
                 document.getElementById('overlay-duration').innerText = (currentDuration / 1000).toFixed(1) + "s";
-            }, 100);
+            }, 50);
         }
 
         function handlePuffEnd(e) {
@@ -281,24 +346,23 @@
             const duration = Date.now() - puffStartTime;
             clearInterval(puffInterval);
             
-            // Guardar datos de esta pitada en el acumulado
             currentSession.puffs++;
             currentSession.totalDurationMs += duration;
 
-            // Actualizar UI
             document.getElementById('overlay-puff-count').innerText = currentSession.puffs;
             document.getElementById('overlay-duration').innerText = "Total: " + (currentSession.totalDurationMs / 1000).toFixed(1) + "s";
             
-            // Resetear botón
             document.getElementById('puff-btn').classList.remove('active');
             puffStartTime = null;
         }
 
         function endSession() {
             if (currentSession.puffs > 0) {
+                const now = new Date();
                 const sessionRecord = {
                     id: Date.now(),
-                    date: currentSession.startTime, // ISO String
+                    date: currentSession.startTime, // Inicio
+                    finishedAt: now.toISOString(),  // Fin (para el cronómetro)
                     puffs: currentSession.puffs,
                     totalDuration: currentSession.totalDurationMs
                 };
@@ -316,11 +380,9 @@
         }
 
         // --- LÓGICA DEL DASHBOARD ---
-
         function updateDashboard() {
-            // Contar sesiones de HOY (usando hora local)
             const now = new Date();
-            const todayStr = now.toDateString(); // "Fri Jan 18 2026"
+            const todayStr = now.toDateString();
             
             const count = events.filter(e => new Date(e.date).toDateString() === todayStr).length;
             document.getElementById('sessions-today').innerText = count;
@@ -334,13 +396,17 @@
                 return;
             }
 
-            // Encontrar el evento más reciente
+            // Ordenar para obtener el evento más reciente
             const lastEvent = events.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-            const lastTime = new Date(lastEvent.date).getTime();
+            
+            // CAMBIO: Usamos 'finishedAt' si existe, sino usamos 'date' (para compatibilidad)
+            const endTimeStr = lastEvent.finishedAt || lastEvent.date;
+            const lastTime = new Date(endTimeStr).getTime();
+            
             const now = Date.now();
             const diff = now - lastTime;
 
-            if (diff < 0) { // Protección por si la hora del sistema cambia
+            if (diff < 0) {
                  document.getElementById('time-since-last').innerText = "00:00:00";
                  return;
             }
@@ -356,35 +422,29 @@
         function pad(num) { return num.toString().padStart(2, '0'); }
 
         // --- LÓGICA DEL CALENDARIO ---
-
         function renderCalendar() {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            
             document.getElementById('calendar-month').innerText = `${monthNames[month]} ${year}`;
 
             const grid = document.getElementById('calendar-grid');
-            grid.innerHTML = ''; // Limpiar
+            grid.innerHTML = ''; 
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // Días vacíos previos
             for (let i = 0; i < firstDay; i++) {
-                const empty = document.createElement('div');
-                empty.className = 'day';
-                grid.appendChild(empty);
+                grid.appendChild(document.createElement('div'));
             }
 
-            // Días del mes
             for (let d = 1; d <= daysInMonth; d++) {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'day';
                 dayEl.innerText = d;
 
-                // Chequear si hay eventos en este día
                 const checkDate = new Date(year, month, d).toDateString();
                 const dayEvents = events.filter(e => new Date(e.date).toDateString() === checkDate);
 
@@ -392,24 +452,27 @@
                     dayEl.classList.add('has-events');
                 }
 
-                dayEl.onclick = () => showDetails(checkDate);
+                dayEl.onclick = () => showDetails(checkDate, dayEl);
                 grid.appendChild(dayEl);
             }
         }
 
-        function showDetails(dateString) {
+        function showDetails(dateString, element) {
+            // Estilo de selección visual
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+            if(element) element.classList.add('selected');
+
             const list = document.getElementById('details-list');
             list.innerHTML = '';
             
             const dayEvents = events.filter(e => new Date(e.date).toDateString() === dateString);
             
             if (dayEvents.length === 0) {
-                list.innerHTML = '<div style="text-align:center; opacity:0.5;">Sin eventos este día</div>';
+                list.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:20px">Sin eventos este día</div>';
                 return;
             }
 
-            // Ordenar por hora
-            dayEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+            dayEvents.sort((a, b) => new Date(b.date) - new Date(a.date)); // Más reciente primero
 
             dayEvents.forEach(e => {
                 const timeStr = new Date(e.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -418,8 +481,11 @@
                 const item = document.createElement('div');
                 item.className = 'event-item';
                 item.innerHTML = `
-                    <span>🕒 ${timeStr}</span>
-                    <span>💨 ${e.puffs} caladas (${durationSec}s)</span>
+                    <div style="font-weight:bold; color:#fff">${timeStr}</div>
+                    <div style="text-align:right">
+                        <div style="color:var(--accent-color); font-weight:bold">💨 ${e.puffs} caladas</div>
+                        <div style="font-size:0.8rem; opacity:0.7">Duración total: ${durationSec}s</div>
+                    </div>
                 `;
                 list.appendChild(item);
             });
