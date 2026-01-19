@@ -8,19 +8,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Vape Tracker</title>
 
-    <link rel="apple-touch-icon" href="icon.svg">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="https://ahhm0699.github.io/apple-icon.png?v=99">
 
     <style>
         :root {
             --bg-color: #0d1117;
             --card-color: #161b22;
             --text-color: #f0f6fc;
+            
             --accent-color: #00e676;
             --accent-gradient: linear-gradient(135deg, #00e676 0%, #00c853 100%);
-            --button-glow: rgba(0, 230, 118, 0.4);
+            
+            --warning-color: #ffd600;
+            --warning-gradient: linear-gradient(135deg, #ffd600 0%, #ffab00 100%);
+            
             --danger-color: #ff5252;
-            --danger-gradient: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
+            --danger-gradient: linear-gradient(135deg, #ff1744 0%, #d50000 100%);
+            
+            /* Variable dinámica para el color del botón */
+            --dynamic-puff-color: var(--accent-color);
+            --dynamic-puff-shadow: rgba(0, 230, 118, 0.4);
         }
 
         body {
@@ -96,7 +104,7 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin-bottom: 30px;
-            box-shadow: 0 0 20px var(--button-glow);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -118,7 +126,6 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        /* Contenedor de navegación del calendario */
         .calendar-header-nav {
             display: flex;
             justify-content: space-between;
@@ -208,7 +215,7 @@
             justify-content: center;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translateY(100%);
-            touch-action: none; /* Evitar scroll en el modal */
+            touch-action: none;
         }
 
         #session-overlay.active { transform: translateY(0); }
@@ -217,8 +224,9 @@
             font-size: 6rem;
             font-weight: 900;
             margin-bottom: 5px;
-            color: var(--accent-color);
-            text-shadow: 0 0 20px var(--button-glow);
+            color: var(--dynamic-puff-color); /* Color dinámico */
+            text-shadow: 0 0 20px var(--dynamic-puff-shadow);
+            transition: color 0.3s ease;
         }
         
         .timer-display { 
@@ -243,20 +251,22 @@
             transition: all 0.1s;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
-            box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            box-shadow: 0 0 0 0 transparent;
+            color: #fff;
         }
 
         #puff-btn.active {
-            background: var(--accent-gradient);
+            background: var(--dynamic-puff-color); /* Color cambia según duración */
             transform: scale(1.05);
             border-color: transparent;
-            box-shadow: 0 0 50px rgba(0, 230, 118, 0.6);
+            box-shadow: 0 0 60px var(--dynamic-puff-shadow);
+            color: #000;
         }
 
         #finish-btn {
-            background: var(--danger-gradient);
-            color: white;
-            border: none;
+            background: #21262d;
+            color: #ff5252;
+            border: 2px solid #ff5252;
             padding: 18px 50px;
             border-radius: 40px;
             font-size: 1.1rem;
@@ -264,11 +274,16 @@
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.4);
+            box-shadow: none;
+            transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
         
-        #finish-btn:active { transform: scale(0.95); }
+        #finish-btn:active { 
+            background: var(--danger-gradient);
+            color: white;
+            transform: scale(0.95); 
+        }
 
     </style>
 </head>
@@ -310,17 +325,23 @@
     </div>
 
     <script>
-        // --- ESTADO GLOBAL ---
-        const STORAGE_KEY = 'vape_tracker_data_v3';
+        // --- CONFIGURACIÓN ---
+        const STORAGE_KEY = 'vape_tracker_data_v4'; // Nueva versión de datos
+        
+        // --- ESTADO ---
         let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
         
-        // Estado para el calendario (mes que se está viendo)
+        // Migración simple de v3 a v4 (por si acaso)
+        if(events.length === 0) {
+            const oldData = localStorage.getItem('vape_tracker_data_v3');
+            if(oldData) events = JSON.parse(oldData);
+        }
+
         let today = new Date();
         let viewMonth = today.getMonth();
         let viewYear = today.getFullYear();
 
-        // Estado de la sesión actual
-        let currentSession = { startTime: null, puffs: 0, totalDurationMs: 0 };
+        let currentSession = { startTime: null, puffs: 0, totalDurationMs: 0, lastPuffTimestamp: null };
         let puffStartTime = null;
         let puffInterval = null;
 
@@ -330,20 +351,15 @@
             renderCalendar();
             setInterval(updateTimeSinceLast, 1000);
 
-            // Listeners de botones principales
             document.getElementById('start-btn').addEventListener('click', startSession);
             document.getElementById('finish-btn').addEventListener('click', endSession);
-            
-            // Listeners de navegación del calendario
             document.getElementById('prev-month-btn').addEventListener('click', prevMonth);
             document.getElementById('next-month-btn').addEventListener('click', nextMonth);
 
-            // Listeners del botón de pitada
             const puffBtn = document.getElementById('puff-btn');
             puffBtn.addEventListener('touchstart', handlePuffStart, {passive: false});
             puffBtn.addEventListener('touchend', handlePuffEnd);
             puffBtn.addEventListener('touchcancel', handlePuffEnd);
-            // Mouse listeners para testing en PC
             puffBtn.addEventListener('mousedown', handlePuffStart);
             puffBtn.addEventListener('mouseup', handlePuffEnd);
             puffBtn.addEventListener('mouseleave', () => { if(puffStartTime) handlePuffEnd(); });
@@ -351,10 +367,22 @@
 
         // --- LÓGICA DE SESIÓN ---
         function startSession() {
-            currentSession = { startTime: new Date().toISOString(), puffs: 0, totalDurationMs: 0 };
+            currentSession = { 
+                startTime: new Date().toISOString(), 
+                puffs: 0, 
+                totalDurationMs: 0,
+                lastPuffTimestamp: null // Nuevo: Guardar el momento exacto de la última pitada
+            };
+            resetPuffColors(); // Resetear colores a verde
             document.getElementById('overlay-puff-count').innerText = "0";
             document.getElementById('overlay-duration').innerText = "0.0s";
             document.getElementById('session-overlay').classList.add('active');
+        }
+
+        function resetPuffColors() {
+            const root = document.documentElement;
+            root.style.setProperty('--dynamic-puff-color', '#00e676'); // Verde base
+            root.style.setProperty('--dynamic-puff-shadow', 'rgba(0, 230, 118, 0.4)');
         }
 
         function handlePuffStart(e) {
@@ -363,24 +391,45 @@
 
             document.getElementById('puff-btn').classList.add('active');
             puffStartTime = Date.now();
+            resetPuffColors();
 
-            // Actualización rápida del timer visual
             puffInterval = setInterval(() => {
                 const currentDuration = Date.now() - puffStartTime;
                 document.getElementById('overlay-duration').innerText = (currentDuration / 1000).toFixed(1) + "s";
+                
+                // LÓGICA DE COLORES (SEMÁFORO)
+                const root = document.documentElement;
+                if (currentDuration > 6000) {
+                    // ROJO (> 6s)
+                    root.style.setProperty('--dynamic-puff-color', '#ff1744');
+                    root.style.setProperty('--dynamic-puff-shadow', 'rgba(255, 23, 68, 0.6)');
+                } else if (currentDuration > 3000) {
+                    // AMARILLO (> 3s)
+                    root.style.setProperty('--dynamic-puff-color', '#ffab00');
+                    root.style.setProperty('--dynamic-puff-shadow', 'rgba(255, 171, 0, 0.6)');
+                } else {
+                    // VERDE DEFAULT (< 3s)
+                    root.style.setProperty('--dynamic-puff-color', '#00e676');
+                    root.style.setProperty('--dynamic-puff-shadow', 'rgba(0, 230, 118, 0.4)');
+                }
+
             }, 30);
         }
 
         function handlePuffEnd(e) {
             if (!puffStartTime) return;
 
-            const duration = Date.now() - puffStartTime;
+            const now = Date.now();
+            const duration = now - puffStartTime;
             clearInterval(puffInterval);
             
-            // Solo registrar si fue una pulsación válida (> 50ms para evitar toques fantasma)
             if (duration > 50) {
                 currentSession.puffs++;
                 currentSession.totalDurationMs += duration;
+                
+                // GUARDAR EL MOMENTO EXACTO DEL FINAL DE LA PITADA
+                currentSession.lastPuffTimestamp = now;
+                
                 document.getElementById('overlay-puff-count').innerText = currentSession.puffs;
             }
             
@@ -392,10 +441,15 @@
         function endSession() {
             if (currentSession.puffs > 0) {
                 const now = new Date();
+                
+                // Si no se registró última pitada (raro pero posible), usar 'ahora'
+                const finalPuffTime = currentSession.lastPuffTimestamp || now.getTime();
+
                 const sessionRecord = {
                     id: Date.now(),
                     date: currentSession.startTime,
-                    finishedAt: now.toISOString(), 
+                    finishedAt: now.toISOString(),
+                    lastPuffTime: finalPuffTime, // Nuevo campo clave para el cronómetro
                     puffs: currentSession.puffs,
                     totalDuration: currentSession.totalDurationMs
                 };
@@ -404,11 +458,7 @@
             }
             
             document.getElementById('session-overlay').classList.remove('active');
-            // Resetear vista del calendario al mes actual si se registra un evento nuevo
-            today = new Date();
-            viewMonth = today.getMonth();
-            viewYear = today.getFullYear();
-            
+            today = new Date(); // Refrescar fecha
             updateDashboard();
             renderCalendar();
         }
@@ -431,18 +481,27 @@
                 document.getElementById('time-since-last').innerText = "--:--:--";
                 return;
             }
+            // Ordenar para obtener la sesión más reciente
             const lastEvent = events.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-            const endTimeStr = lastEvent.finishedAt || lastEvent.date; // Retrocompatibilidad
-            const lastTime = new Date(endTimeStr).getTime();
             
-            const diff = Date.now() - lastTime;
+            // PRIORIDAD: Usar 'lastPuffTime' (nuevo), si no existe, usar 'finishedAt' (viejo), si no 'date'
+            let refTime = 0;
+            if (lastEvent.lastPuffTime) {
+                refTime = lastEvent.lastPuffTime;
+            } else if (lastEvent.finishedAt) {
+                refTime = new Date(lastEvent.finishedAt).getTime();
+            } else {
+                refTime = new Date(lastEvent.date).getTime();
+            }
+            
+            const diff = Date.now() - refTime;
             if (diff < 0) {
                  document.getElementById('time-since-last').innerText = "00:00:00";
                  return;
             }
 
-            const hours = Math.floor(diff / (3600000)); // 1000*60*60
-            const minutes = Math.floor((diff % (3600000)) / 60000); // 1000*60
+            const hours = Math.floor(diff / (3600000));
+            const minutes = Math.floor((diff % (3600000)) / 60000);
             const seconds = Math.floor((diff % 60000) / 1000);
 
             document.getElementById('time-since-last').innerText = 
@@ -454,19 +513,13 @@
         // --- LÓGICA DEL CALENDARIO ---
         function prevMonth() {
             viewMonth--;
-            if (viewMonth < 0) {
-                viewMonth = 11;
-                viewYear--;
-            }
+            if (viewMonth < 0) { viewMonth = 11; viewYear--; }
             renderCalendar();
         }
 
         function nextMonth() {
             viewMonth++;
-            if (viewMonth > 11) {
-                viewMonth = 0;
-                viewYear++;
-            }
+            if (viewMonth > 11) { viewMonth = 0; viewYear++; }
             renderCalendar();
         }
 
@@ -476,18 +529,16 @@
 
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = ''; 
-            document.getElementById('details-list').innerHTML = ''; // Limpiar detalles al cambiar de mes
+            document.getElementById('details-list').innerHTML = ''; 
 
             const firstDayIdx = new Date(viewYear, viewMonth, 1).getDay();
             const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-            // Días vacíos al inicio
             for (let i = 0; i < firstDayIdx; i++) {
                 grid.appendChild(document.createElement('div'));
             }
 
-            // Días del mes
-            today = new Date(); // Actualizar 'hoy' por si acaso
+            today = new Date(); 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'day';
@@ -496,12 +547,10 @@
                 const currentDateObj = new Date(viewYear, viewMonth, d);
                 const checkDateStr = currentDateObj.toDateString();
                 
-                // Marcar si es HOY
                 if (checkDateStr === today.toDateString()) {
                     dayEl.classList.add('today-indicator');
                 }
 
-                // Marcar si tiene eventos
                 const dayEvents = events.filter(e => new Date(e.date).toDateString() === checkDateStr);
                 if (dayEvents.length > 0) {
                     dayEl.classList.add('has-events');
@@ -543,8 +592,6 @@
                 `;
                 list.appendChild(item);
             });
-            
-            // Scroll hacia los detalles
             list.scrollIntoView({behavior: 'smooth', block: 'start'});
         }
     </script>
